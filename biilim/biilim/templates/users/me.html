@@ -1,0 +1,277 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}
+{{title}}
+{% endblock title %}
+
+{% block content %}
+<style>
+    .stepper-header {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-bottom: 2rem;
+        gap: 1.5rem;
+    }
+
+    .step-indicator {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: #e9ecef;
+        color: #6c757d;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        font-size: 1.2rem;
+        transition: background 0.3s, color 0.3s;
+        border: 2px solid #dee2e6;
+    }
+
+    .step-indicator.active {
+        background: #0d6efd;
+        color: #fff;
+        border-color: #0d6efd;
+        box-shadow: 0 0 0 4px #0d6efd22;
+    }
+
+    .step-label {
+        font-size: 0.95rem;
+        color: #495057;
+        margin-top: 0.25rem;
+        text-align: center;
+    }
+
+    .step {
+        animation: fadeIn 0.5s;
+        border: 1px solid #dee2e6;
+        border-radius: 0.5rem;
+        padding: 1.5rem;
+        background: #fff;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        margin-bottom: 1.5rem;
+    }
+
+    .step.slide-in-left {
+        animation: slideInLeft 0.4s;
+    }
+
+    .step.slide-in-right {
+        animation: slideInRight 0.4s;
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+        }
+
+        to {
+            opacity: 1;
+        }
+    }
+
+    @keyframes slideInLeft {
+        from {
+            opacity: 0;
+            transform: translateX(-40px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+
+    @keyframes slideInRight {
+        from {
+            opacity: 0;
+            transform: translateX(40px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+
+    .helper-text {
+        font-size: 0.95rem;
+        color: #6c757d;
+        margin-bottom: 1.5rem;
+    }
+</style>
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <h2 class="mb-4 text-center">{% translate "Complete Your Profile" %}</h2>
+            <div class="helper-text text-center mb-3">
+                <span>We use this information to personalize your learning experience and recommend the best study
+                    methods for you. Your data is kept private and secure.</span>
+            </div>
+            <!-- Stepper Header -->
+            <div class="stepper-header mb-4">
+                <div class="d-flex flex-column align-items-center">
+                    <div class="step-indicator" id="indicator-1">1</div>
+                    <div class="step-label">Basic Info</div>
+                </div>
+                <div style="flex:1; height:2px; background:#dee2e6; margin:0 8px;"></div>
+                <div class="d-flex flex-column align-items-center">
+                    <div class="step-indicator" id="indicator-2">2</div>
+                    <div class="step-label">Hobbies</div>
+                </div>
+                <div style="flex:1; height:2px; background:#dee2e6; margin:0 8px;"></div>
+                <div class="d-flex flex-column align-items-center">
+                    <div class="step-indicator" id="indicator-3">3</div>
+                    <div class="step-label">Learning Styles</div>
+                </div>
+            </div>
+            <form id="profileStepperForm" method="post" novalidate>
+                {% csrf_token %}
+                <div class="stepper">
+                    <!-- Step 1: Demographics -->
+                    <div class="step" id="step-1">
+                        <div class="helper-text mb-2">Tell us a bit about yourself. This helps us understand your
+                            background and tailor your learning journey.</div>
+                        <div class="mb-3">
+                            <label for="age" class="form-label">Age</label>
+                            <input type="number" class="form-control border border-2" id="age" name="age" min="10"
+                                max="120" required value="{{ profile.age|default_if_none:'' }}">
+                        </div>
+                        <div class="mb-3">
+                            <label for="city" class="form-label">City</label>
+                            <input type="text" class="form-control border border-2" id="city" name="city"
+                                maxlength="100" value="{{ profile.city }}">
+                        </div>
+                        <div class="mb-3">
+                            <label for="country" class="form-label">Country</label>
+                            <input type="text" class="form-control border border-2" id="country" name="country"
+                                maxlength="100" value="{{ profile.country }}">
+                        </div>
+                        <div class="mb-3">
+                            <label for="cultural_background" class="form-label">Cultural Background</label>
+                            <input type="text" class="form-control border border-2" id="cultural_background"
+                                name="cultural_background" maxlength="255" value="{{ profile.cultural_background }}">
+                            <div class="form-text">
+                                For example: <strong>Turkish</strong>, <strong>Kazakh</strong>,
+                                <strong>International</strong>, <strong>STEM-focused</strong>,
+                                <strong>Multicultural</strong>, <strong>Rural</strong>, <strong>Urban</strong>,
+                                <strong>First-generation student</strong>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-secondary btn-lg" disabled>Back</button>
+                        <button type="button" class="btn btn-primary btn-lg float-end"
+                            onclick="nextStep(2)">Next</button>
+                    </div>
+                    <!-- Step 2: Hobbies/Interests -->
+                    <div class="step d-none" id="step-2">
+                        <div class="helper-text mb-2">Share your hobbies and interests. We'll use these to make your
+                            learning more engaging and relevant.</div>
+                        <div class="mb-3">
+                            <label for="hobbies" class="form-label">Hobbies/Interests
+                                <small>(comma-separated)</small></label>
+                            <input type="text" class="form-control border border-2" id="hobbies" name="hobbies"
+                                maxlength="255" value="{{ profile.hobbies }}">
+                        </div>
+                        <button type="button" class="btn btn-secondary btn-lg" onclick="prevStep(1)">Back</button>
+                        <button type="button" class="btn btn-primary btn-lg float-end"
+                            onclick="nextStep(3)">Next</button>
+                    </div>
+                    <!-- Step 3: Learning Styles -->
+                    <div class="step d-none" id="step-3">
+                        <div class="helper-text mb-2">Choose the ways you learn best. We'll adapt content to match your
+                            style!</div>
+                        <div class="mb-3">
+                            <label class="form-label">Select all that apply:</label>
+                            <div class="form-check">
+                                <input {% if 'visual' in profile.learning_styles %}checked{% endif %}
+                                    class="form-check-input" type="checkbox" value="visual" id="styleVisual"
+                                    name="learning_styles">
+                                <label class="form-check-label" for="styleVisual">Visual</label>
+                            </div>
+                            <div class="form-check">
+                                <input {% if 'auditory' in profile.learning_styles %}checked{% endif %}
+                                    class="form-check-input" type="checkbox" value="auditory" id="styleAuditory"
+                                    name="learning_styles">
+                                <label class="form-check-label" for="styleAuditory">Auditory</label>
+                            </div>
+                            <div class="form-check">
+                                <input {% if 'reading_writing' in profile.learning_styles %}checked{% endif %}
+                                    class="form-check-input" type="checkbox" value="reading_writing" id="styleReading"
+                                    name="learning_styles">
+                                <label class="form-check-label" for="styleReading">Reading/Writing</label>
+                            </div>
+                            <div class="form-check">
+                                <input {% if 'kinesthetic' in profile.learning_styles %}checked{% endif %}
+                                    class="form-check-input" type="checkbox" value="kinesthetic" id="styleKinesthetic"
+                                    name="learning_styles">
+                                <label class="form-check-label" for="styleKinesthetic">Kinesthetic/Doing</label>
+                            </div>
+                            <div class="form-check">
+                                <input {% if 'simulation' in profile.learning_styles %}checked{% endif %}
+                                    class="form-check-input" type="checkbox" value="simulation" id="styleSimulation"
+                                    name="learning_styles">
+                                <label class="form-check-label" for="styleSimulation">Simulation</label>
+                            </div>
+                            <div class="form-check">
+                                <input {% if 'real_world' in profile.learning_styles %}checked{% endif %}
+                                    class="form-check-input" type="checkbox" value="real_world" id="styleRealWorld"
+                                    name="learning_styles">
+                                <label class="form-check-label" for="styleRealWorld">Real-world Practice</label>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-secondary btn-lg" onclick="prevStep(2)">Back</button>
+                        <button type="submit" class="btn btn-success btn-lg float-end">Finish And Save</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    let currentStep = 1;
+    function updateStepperHeader(step) {
+        for (let i = 1; i <= 3; i++) {
+            document.getElementById('indicator-' + i).classList.remove('active');
+        }
+        document.getElementById('indicator-' + step).classList.add('active');
+    }
+    function showStep(step, direction) {
+        document.querySelectorAll('.step').forEach(el => el.classList.add('d-none'));
+        const stepDiv = document.getElementById('step-' + step);
+        stepDiv.classList.remove('d-none', 'slide-in-left', 'slide-in-right');
+        if (direction === 'next') {
+            stepDiv.classList.add('slide-in-right');
+        } else if (direction === 'prev') {
+            stepDiv.classList.add('slide-in-left');
+        }
+        updateStepperHeader(step);
+        currentStep = step;
+    }
+    function nextStep(step) {
+        showStep(step, 'next');
+    }
+    function prevStep(step) {
+        showStep(step, 'prev');
+    }
+    // On submit, collect checked learning styles as comma-separated string
+    document.getElementById('profileStepperForm').addEventListener('submit', function (e) {
+        const checkboxes = document.querySelectorAll('input[name="learning_styles"]:checked');
+        let values = [];
+        checkboxes.forEach(cb => values.push(cb.value));
+        // Create a hidden input to submit as comma-separated string
+        let hidden = document.createElement('input');
+        hidden.type = 'hidden';
+        hidden.name = 'learning_styles_final';
+        hidden.value = values.join(',');
+        this.appendChild(hidden);
+    });
+    // Initialize
+    document.addEventListener('DOMContentLoaded', function () {
+        showStep(1);
+    });
+</script>
+{% endblock content %}
