@@ -78,7 +78,7 @@ def users_me(request):
 
         ctx["success"] = True
         messages.success(request, _("Profile updated successfully."))
-        return redirect("users:me")
+        return redirect("learn:index")
 
     return render(request, "users/me.html", ctx)
 

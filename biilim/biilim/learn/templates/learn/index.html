@@ -1,0 +1,101 @@
+{% extends 'learn/base.html' %}
+
+{% block learn_body %}
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8 col-md-10">
+            <!-- Hero Section -->
+            <section class="text-center mb-5">
+                <h1 class="fw-bold mb-3" style="font-size:2.5rem;">{{ _("What do you want to learn today?") }}</h1>
+                <p class="lead text-muted mb-0">
+                    {{ _("Personalize your learning journey. Search, upload, or explore trending topics!") }}
+                </p>
+            </section>
+
+            <!-- Search Section -->
+            <section class="mb-4">
+                <div class="card shadow-sm border-0">
+                    <div class="card-body p-4">
+                        <form method="post" action="{% url 'learn:topic_search' %}" autocomplete="off">
+                            {% csrf_token %}
+                            <label for="topic" class="form-label visually-hidden">{{ _("Search for a topic") }}</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control border-2 rounded-start" name="topic" id="topic"
+                                    placeholder="e.g. Python Decorators, Photosynthesis, World War II causes" required
+                                    autofocus>
+                                <button class="btn btn-primary rounded-end px-4" type="submit">
+                                    🔎 {{ _("Search") }}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Upload Section -->
+            <section class="mb-4">
+                <div class="card shadow-sm border-0 bg-light">
+                    <div class="card-body p-4">
+                        <form method="post" action="{% url 'learn:upload' %}" enctype="multipart/form-data">
+                            {% csrf_token %}
+                            <label for="document" class="form-label fw-semibold">
+                                {{ _("Upload your own study material")}}
+                            </label>
+                            <div class="input-group">
+                                <input type="file" class="form-control" id="document" name="document" required>
+                                <button class="btn btn-outline-secondary" type="submit">
+                                    <i class="bi bi-upload"></i> {{ _("Upload") }}
+                                </button>
+                            </div>
+                            <div class="form-text text-muted mt-2">
+                                {{ _("Supported formats: PDF, DOCX, TXT") }}
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Divider -->
+            <div class="my-4 text-center">
+                <span class="badge bg-secondary px-3 py-2" style="font-size:1rem;">{{ _("or") }}</span>
+            </div>
+
+            <!-- Recommended Topics Section -->
+            <section>
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h4 class="mb-0">{{ _("Recommended Topics") }}</h4>
+                    <a href="{% url 'learn:topics' %}" class="btn btn-dark btn-sm">
+                        <i class="bi bi-compass"></i> {{ _("See All Topics") }}
+                    </a>
+                </div>
+                <div class="row g-4">
+                    {% for topic in recommended_topics %}
+                    <div class="col-md-6 col-lg-4">
+                        <div class="card h-100 border-0 shadow-sm hover-shadow">
+                            <div class="card-body d-flex flex-column">
+                                <h5 class="card-title fw-semibold mb-2">{{ topic.title }}</h5>
+                                <p class="card-text text-muted small flex-grow-1">{{ topic.description }}</p>
+                                <a href=" {% url 'learn:topic_detail' topic.id %} "
+                                    class="btn btn-outline-dark btn-sm mt-2 w-100">
+                                    ⚡️ {{ _("Start Learning") }}
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="col-12 text-center text-muted">
+                        {{ _("No recommendations yet. Check back soon!") }}
+                    </div>
+                    {% endfor %}
+                </div>
+            </section>
+        </div>
+    </div>
+</div>
+<style>
+    .hover-shadow:hover {
+        box-shadow: 0 0.5rem 1.5rem rgba(13, 110, 253, .15), 0 0.125rem 0.25rem rgba(0, 0, 0, .075) !important;
+        transition: box-shadow 0.2s;
+    }
+</style>
+{% endblock learn_body %}

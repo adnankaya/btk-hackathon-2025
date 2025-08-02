@@ -1,0 +1,132 @@
+{% extends 'learn/base.html' %}
+
+{% block learn_body %}
+<style>
+  .sticky-header {
+    position: sticky;
+    top: 0;
+    z-index: 1030;
+    background-color: #fff;
+    padding: 0.75rem 1rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  }
+
+  .timer-box {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #dc3545;
+    text-align: right;
+  }
+
+  .sticky-sidebar {
+    position: sticky;
+    top: 80px; /* height of sticky header */
+  }
+
+  .section-block {
+    min-height: 90vh;
+    scroll-margin-top: 100px; /* prevent header overlap */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  @media (max-width: 768px) {
+    .sticky-sidebar {
+      position: static;
+      top: auto;
+    }
+  }
+</style>
+
+<div class="container-fluid my-4">
+  <!-- Sticky Header: Progress Bar + Timer -->
+  <div class="row sticky-header align-items-center">
+    <div class="col-md-9">
+      <div class="progress" style="height: 20px;">
+        <div id="progress-bar" class="progress-bar bg-success" role="progressbar" style="width: 0%;">
+          0%
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3 timer-box" id="timer">30:00</div>
+  </div>
+
+  <div class="row mt-3">
+    <!-- Sticky Sidebar -->
+    <div class="col-md-3 mb-4">
+      <div class="sticky-sidebar">
+        <h5 class="mb-3">{{ topic.title }}</h5>
+        <div class="list-group">
+          {% for section in topic.sections.all %}
+          <a class="list-group-item list-group-item-action" href="#section-{{ section.pk }}">{{ section.title }}</a>
+          {% endfor %}
+        </div>
+        <a href="{% url 'learn:topics' %}" class="btn btn-outline-secondary mt-4 w-100">Back to Topics</a>
+      </div>
+    </div>
+
+    <!-- Main Content Area -->
+    <div class="col-md-9">
+      <div class="mb-5">
+        <h2 class="h4">Description</h2>
+        <p>{{ topic.description }}</p>
+      </div>
+
+      {% for section in topic.sections.all %}
+      <div id="section-{{ section.pk }}" class="mb-5 section-block border rounded p-4 shadow-sm">
+        <h3 class="h5 mb-3">{{ section.title }}</h3>
+        <p class="flex-grow-1">{{ section.content }}</p>
+        <div class="form-check mt-4">
+          <input class="form-check-input section-checkbox" type="checkbox" id="check-{{ section.pk }}">
+          <label class="form-check-label" for="check-{{ section.pk }}">
+            Mark as completed
+          </label>
+        </div>
+      </div>
+      {% empty %}
+      <div class="alert alert-warning">No sections available for this topic.</div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    // Progress Bar
+    const checkboxes = document.querySelectorAll('.section-checkbox');
+    const progressBar = document.getElementById('progress-bar');
+
+    function updateProgress() {
+      const total = checkboxes.length;
+      const completed = Array.from(checkboxes).filter(cb => cb.checked).length;
+      const percent = Math.round((completed / total) * 100);
+      progressBar.style.width = percent + '%';
+      progressBar.innerText = percent + '%';
+    }
+
+    checkboxes.forEach(cb => cb.addEventListener('change', updateProgress));
+
+    // Timer
+    const timerDisplay = document.getElementById('timer');
+    let totalSeconds = 30 * 60;
+
+    function updateTimer() {
+      const minutes = Math.floor(totalSeconds / 60);
+      const seconds = totalSeconds % 60;
+      timerDisplay.textContent = `⏱ ${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+      if (totalSeconds > 0) {
+        totalSeconds--;
+        setTimeout(updateTimer, 1000);
+      } else {
+        timerDisplay.textContent = "☑️ Time's up!";
+        timerDisplay.classList.remove('text-danger');
+        timerDisplay.classList.add('text-dark');
+      }
+    }
+
+    updateTimer();
+  });
+</script>
+{% endblock %}

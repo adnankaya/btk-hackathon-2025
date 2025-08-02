@@ -83,8 +83,10 @@ THIRD_PARTY_APPS = [
 ]
 
 LOCAL_APPS = [
+    "biilim.core",
     "biilim.users",
-    # Your stuff: custom apps go here
+    "biilim.learn",
+    "biilim.home",
 ]
 # https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
