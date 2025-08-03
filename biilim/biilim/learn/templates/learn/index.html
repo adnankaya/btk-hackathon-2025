@@ -21,7 +21,7 @@
                             <label for="topic" class="form-label visually-hidden">{{ _("Search for a topic") }}</label>
                             <div class="input-group">
                                 <input type="text" class="form-control border-2 rounded-start" name="topic" id="topic"
-                                    placeholder="e.g. Python Decorators, Photosynthesis, World War II causes" required
+                                    placeholder="e.g. Python Decorators, Photosynthesis" required
                                     autofocus>
                                 <button class="btn btn-primary rounded-end px-4" type="submit">
                                     🔎 {{ _("Search") }}
@@ -31,6 +31,10 @@
                     </div>
                 </div>
             </section>
+            <!-- Divider -->
+            <div class="my-4 text-center">
+                <span class="badge bg-secondary px-3 py-2" style="font-size:1rem;">{{ _("or") }}</span>
+            </div>
 
             <!-- Upload Section -->
             <section class="mb-4">

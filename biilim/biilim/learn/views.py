@@ -17,7 +17,7 @@ def index(request):
     ctx = {
         "title": "Learn",
         "description": "Explore topics, browse content, and enhance your knowledge.",
-        "recommended_topics": Topic.objects.filter(is_recommended=True).order_by("-created_at")[:5],
+        "recommended_topics": Topic.objects.filter(is_recommended=True).order_by("-created_at")[:6],
     }
     return render(request, "learn/index.html", ctx)
 
