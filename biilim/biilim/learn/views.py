@@ -1,7 +1,7 @@
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
 
-
+from biilim.core.views import HtmxHttpRequest
 from biilim.learn.models import Topic
 
 def index(request):
@@ -17,7 +17,6 @@ def index(request):
     ctx = {
         "title": "Learn",
         "description": "Explore topics, browse content, and enhance your knowledge.",
-        "recommended_topics": Topic.objects.filter(is_recommended=True).order_by("-created_at")[:6],
     }
     return render(request, "learn/index.html", ctx)
 
@@ -88,3 +87,15 @@ def topic_search(request):
         
     return render(request, "learn/topic_search.html", {"title": "Select a Topic"})
 
+def hx_recommended_topics(request: HtmxHttpRequest):
+    """
+    Handle HTMX request to fetch recommended topics.
+    
+    Args:
+        request: The HTMX HTTP request object.
+    
+    Returns:
+        HttpResponse: Rendered HTMX response with recommended topics.
+    """
+    recommended_topics = Topic.objects.filter(is_recommended=True).order_by("-created_at")[:6]
+    return render(request, "learn/hx_recommended_topics.html", {"recommended_topics": recommended_topics})

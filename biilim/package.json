@@ -9,6 +9,7 @@
     "babel-loader": "^10.0.0",
     "bootstrap": "^5.2.3",
     "css-loader": "^7.1.2",
+    "htmx.org": "^2.0.6",
     "mini-css-extract-plugin": "^2.4.5",
     "node-sass-tilde-importer": "^1.0.2",
     "pixrem": "^5.0.0",

@@ -20,8 +20,7 @@
                             <label for="topic" class="form-label visually-hidden">{{ _("Search for a topic") }}</label>
                             <div class="input-group">
                                 <input type="text" class="form-control border-2 rounded-start" name="query" id="topic"
-                                    placeholder="e.g. Python Decorators, Photosynthesis" required
-                                    autofocus>
+                                    placeholder="e.g. Python Decorators, Photosynthesis" required autofocus>
                                 <button class="btn btn-primary rounded-end px-4" type="submit">
                                     🔎 {{ _("Search") }}
                                 </button>
@@ -65,31 +64,17 @@
 
             <!-- Recommended Topics Section -->
             <section>
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h4 class="mb-0">{{ _("Recommended Topics") }}</h4>
-                    <a href="{% url 'learn:topics' %}" class="btn btn-dark btn-sm">
-                        <i class="bi bi-compass"></i> {{ _("See All Topics") }}
-                    </a>
-                </div>
-                <div class="row g-4">
-                    {% for topic in recommended_topics %}
-                    <div class="col-md-6 col-lg-4">
-                        <div class="card h-100 border-0 shadow-sm hover-shadow">
-                            <div class="card-body d-flex flex-column">
-                                <h5 class="card-title fw-semibold mb-2">{{ topic.title }}</h5>
-                                <p class="card-text text-muted small flex-grow-1">{{ topic.description }}</p>
-                                <a href=" {% url 'learn:topic_detail' topic.id %} "
-                                    class="btn btn-outline-dark btn-sm mt-2 w-100">
-                                    ⚡️ {{ _("Start Learning") }}
-                                </a>
-                            </div>
+                <!-- use htmx to load recommended topics -->
+                <div id="recommended-topics" hx-get="{% url 'learn:hx-recommended-topics' %}" hx-trigger="load delay:1s"
+                    hx-target="#recommended-topics">
+                    <div class="text-center">
+                        <div class="spinner-grow spinner-grow-sm" role="status">
+                            <span class="visually-hidden">Loading...</span>
                         </div>
+                        <p class="text-muted">
+                            {{ _("Loading recommended topics...") }}
+                        </p>
                     </div>
-                    {% empty %}
-                    <div class="col-12 text-center text-muted">
-                        {{ _("No recommendations yet. Check back soon!") }}
-                    </div>
-                    {% endfor %}
                 </div>
             </section>
         </div>

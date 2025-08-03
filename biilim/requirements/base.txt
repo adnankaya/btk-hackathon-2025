@@ -7,6 +7,8 @@ hiredis==3.2.1  # https://github.com/redis/hiredis-py
 celery==5.5.3  # pyup: < 6.0  # https://github.com/celery/celery
 django-celery-beat==2.8.1  # https://github.com/celery/django-celery-beat
 flower==2.0.1  # https://github.com/mher/flower
+google-genai==1.2.0
+pydantic==2.10.4
 
 # Django
 # ------------------------------------------------------------------------------
@@ -18,3 +20,4 @@ django-crispy-forms==2.4  # https://github.com/django-crispy-forms/django-crispy
 crispy-bootstrap5==2025.6  # https://github.com/django-crispy-forms/crispy-bootstrap5
 django-redis==6.0.0  # https://github.com/jazzband/django-redis
 django-webpack-loader==3.2.1  # https://github.com/django-webpack/django-webpack-loader
+django-htmx==1.18.0
