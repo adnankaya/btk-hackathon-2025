@@ -76,9 +76,15 @@ def topic_search(request):
     Returns:
         HttpResponse: Rendered topic selection page.
     """
-    if request.method == "POST":
-        topic = request.POST.get("topic")
-        # TODO: Implement search logic based on the topic
+    query = request.GET.get("query")
+    if query:
+        topics = Topic.objects.filter(title__icontains=query).order_by("-created_at")
+        ctx = {
+            "title": "Search Results",
+            "topics": topics,
+            "query": query,
+        }
+        return render(request, "learn/topic_search.html", ctx)
         
     return render(request, "learn/topic_search.html", {"title": "Select a Topic"})
 

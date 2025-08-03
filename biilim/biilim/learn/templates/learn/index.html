@@ -7,7 +7,7 @@
             <!-- Hero Section -->
             <section class="text-center mb-5">
                 <h1 class="fw-bold mb-3" style="font-size:2.5rem;">{{ _("What do you want to learn today?") }}</h1>
-                <p class="lead text-muted mb-0">
+                <p class="lead mb-0">
                     {{ _("Personalize your learning journey. Search, upload, or explore trending topics!") }}
                 </p>
             </section>
@@ -16,11 +16,10 @@
             <section class="mb-4">
                 <div class="card shadow-sm border-0">
                     <div class="card-body p-4">
-                        <form method="post" action="{% url 'learn:topic_search' %}" autocomplete="off">
-                            {% csrf_token %}
+                        <form method="GET" action="{% url 'learn:topic_search' %}" autocomplete="off">
                             <label for="topic" class="form-label visually-hidden">{{ _("Search for a topic") }}</label>
                             <div class="input-group">
-                                <input type="text" class="form-control border-2 rounded-start" name="topic" id="topic"
+                                <input type="text" class="form-control border-2 rounded-start" name="query" id="topic"
                                     placeholder="e.g. Python Decorators, Photosynthesis" required
                                     autofocus>
                                 <button class="btn btn-primary rounded-end px-4" type="submit">
