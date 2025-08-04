@@ -16,6 +16,10 @@ $pink: #f2dede;
 $dark-pink: #eed3d7;
 $red: #b94a48;
 
+body{
+  background-color: #E8DCB8;
+}
+
 ////////////
 // Alerts //
 ////////////
@@ -37,13 +41,13 @@ $red: #b94a48;
 
 // override bootstrap's buttons color and use gradient colors
 .btn-primary {
-  background-image: linear-gradient(to right, #6a11cb, #2575fc
+  background-image: linear-gradient(to right, #3254b9, #172347
   );
-  border-color: #6a11cb;
+  border-color: #3254b9;
   color: $white;
 }
 .btn-success{
-  background-image: linear-gradient(to right, #5cd47f, #198754
+  background-image: linear-gradient(to right, #5cd47f, #172347
   );
   border-color: #5cd47f;
   color: $white;
