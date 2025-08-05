@@ -3,6 +3,8 @@ from django.contrib.auth.decorators import login_required
 
 from biilim.core.views import HtmxHttpRequest
 from biilim.learn.models import Topic
+from biilim.learn.schemas import TopicSchema
+from biilim.ai.api_client import gemini_generate_topic
 
 def index(request):
     """
@@ -77,12 +79,33 @@ def topic_search(request):
     """
     query = request.GET.get("query")
     if query:
-        topics = Topic.objects.filter(title__icontains=query).order_by("-created_at")
         ctx = {
             "title": "Search Results",
-            "topics": topics,
             "query": query,
         }
+        topics = Topic.objects.filter(title__icontains=query).order_by("-created_at")
+        if topics:
+            ctx["topics"] = topics
+        else:
+            generated_topic = gemini_generate_topic(
+                prompt=query,
+                response_schema=TopicSchema,
+            )
+            # save the generated topic to the database
+            new_topic = Topic.objects.create(
+                title=generated_topic.title,
+                description=generated_topic.description,
+                duration=generated_topic.duration,
+                is_recommended=generated_topic.is_recommended,
+            )
+            for section in generated_topic.sections:
+                new_topic.sections.create(
+                    title=section.title,
+                    content=section.content,
+                    index=section.index,
+                )
+            ctx["generated_topic"] = new_topic
+
         return render(request, "learn/topic_search.html", ctx)
         
     return render(request, "learn/topic_search.html", {"title": "Select a Topic"})

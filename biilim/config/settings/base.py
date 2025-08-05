@@ -1,6 +1,6 @@
 # ruff: noqa: ERA001, E501
 """Base settings to build other settings files upon."""
-
+import os
 import ssl
 from pathlib import Path
 
@@ -85,6 +85,7 @@ THIRD_PARTY_APPS = [
 
 LOCAL_APPS = [
     "biilim.core",
+    "biilim.ai",
     "biilim.users",
     "biilim.learn",
     "biilim.home",
@@ -339,3 +340,4 @@ WEBPACK_LOADER = {
 }
 # Your stuff...
 # ------------------------------------------------------------------------------
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
