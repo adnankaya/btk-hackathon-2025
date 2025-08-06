@@ -60,31 +60,48 @@
                 aria-label="Toggle navigation">
           <span class="navbar-toggler-icon"></span>
         </button>
-        <a class="navbar-brand" href="{% url 'learn:index' %}">bi-ilim</a>
+        <a class="navbar-brand" href="{% url 'learn:index' %}">
+          <i class="bi bi-feather"></i>  
+          bi-ilim
+        </a>
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
           <ul class="navbar-nav mr-auto">
             <li class="nav-item active">
-              <a class="nav-link" href="{% url 'learn:index' %}">Learn <span class="visually-hidden">(current)</span></a>
+              <a class="nav-link" href="{% url 'learn:topics' %}">
+                Topics <span class="visually-hidden">(current)</span>
+              </a>
             </li>
             {% if request.user.is_authenticated %}
-              <li class="nav-item">
-                <a class="nav-link"
-                   href="{% url 'users:me'  %}">{% translate "My Profile" %}</a>
-              </li>
-              <li class="nav-item">
-                {# URL provided by django-allauth/account/urls.py #}
-                <a class="nav-link" href="{% url 'account_logout' %}">{% translate "Sign Out" %}</a>
+              <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button"
+                  data-bs-toggle="dropdown" aria-expanded="false">
+                  {{ request.user.email|default:request.user.username }}
+                </a>
+                <ul class="dropdown-menu" aria-labelledby="userDropdown">
+                  <li>
+                    <a class="dropdown-item" href="{% url 'users:me' %}">
+                      {% translate "My Profile" %}
+                    </a>
+                  </li>
+                  <li>
+                    <a class="dropdown-item" href="{% url 'account_logout' %}">
+                      {% translate "Sign Out" %}
+                    </a>
+                  </li>
+                </ul>
               </li>
             {% else %}
               {% if ACCOUNT_ALLOW_REGISTRATION %}
                 <li class="nav-item">
-                  {# URL provided by django-allauth/account/urls.py #}
-                  <a id="sign-up-link" class="nav-link" href="{% url 'account_signup' %}">{% translate "Sign Up" %}</a>
+                  <a id="sign-up-link" class="nav-link" href="{% url 'account_signup' %}">
+                    {% translate "Sign Up" %}
+                  </a>
                 </li>
               {% endif %}
               <li class="nav-item">
-                {# URL provided by django-allauth/account/urls.py #}
-                <a id="log-in-link" class="nav-link" href="{% url 'account_login' %}">{% translate "Sign In" %}</a>
+                <a id="log-in-link" class="nav-link" href="{% url 'account_login' %}">
+                  {% translate "Sign In" %}
+                </a>
               </li>
             {% endif %}
           </ul>
