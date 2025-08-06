@@ -10,25 +10,29 @@
     background-color: whitesmoke;
     padding: 0.75rem 1rem;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-    border-radius: 0 0 1rem 1rem; /* Rounded corners at the bottom */
+    border-radius: 0 0 1rem 1rem;
+    /* Rounded corners at the bottom */
   }
 
   .timer-box {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     font-size: 1.5rem;
     font-weight: bold;
-    color: #dc3545; /* A more prominent color for the timer */
+    color: #dc3545;
+    /* A more prominent color for the timer */
     text-align: right;
   }
-  
+
   .sticky-sidebar {
     position: sticky;
-    top: 80px; /* height of sticky header */
+    top: 80px;
+    /* height of sticky header */
   }
-  
+
   .section-block {
     min-height: 90vh;
-    scroll-margin-top: 100px; /* prevent header overlap */
+    scroll-margin-top: 100px;
+    /* prevent header overlap */
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -43,22 +47,28 @@
     position: fixed;
     bottom: 20px;
     right: 20px;
-    width: 350px; /* Fixed width for desktop */
-    height: 500px; /* Fixed height for desktop */
+    width: 350px;
+    /* Fixed width for desktop */
+    height: 500px;
+    /* Fixed height for desktop */
     background-color: #ffffff;
     border: 1px solid #e2e8f0;
     border-radius: 1.5rem;
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
     display: flex;
     flex-direction: column;
-    z-index: 1040; /* Above other sticky elements */
-    overflow: hidden; /* Hide scrollbars initially */
-    transform: translateX(100%); /* Start hidden off-screen */
+    z-index: 1040;
+    /* Above other sticky elements */
+    overflow: hidden;
+    /* Hide scrollbars initially */
+    transform: translateX(100%);
+    /* Start hidden off-screen */
     transition: transform 0.3s ease-in-out;
   }
 
   #ai-chatbox.open {
-    transform: translateX(0); /* Slide in when open */
+    transform: translateX(0);
+    /* Slide in when open */
   }
 
   .chatbox-header {
@@ -74,7 +84,8 @@
   .chatbox-body {
     flex-grow: 1;
     padding: 1rem;
-    overflow-y: auto; /* Enable scrolling for chat content */
+    overflow-y: auto;
+    /* Enable scrolling for chat content */
     display: flex;
     flex-direction: column;
   }
@@ -99,13 +110,15 @@
     justify-content: center;
     align-items: center;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-    z-index: 1050; /* Above chatbox */
+    z-index: 1050;
+    /* Above chatbox */
     cursor: pointer;
     transition: transform 0.3s ease-in-out;
   }
 
   #chatbox-toggle-button.open {
-    transform: translateX(-370px); /* Move left to make space for chatbox */
+    transform: translateX(-370px);
+    /* Move left to make space for chatbox */
   }
 
   /* Styling for the explanation section within chatbox */
@@ -114,36 +127,41 @@
     border-color: #c0d9ff;
     border-radius: 1rem;
     padding: 1.5rem;
-    margin-top: auto; /* Push to bottom of chat body */
+    margin-top: auto;
+    /* Push to bottom of chat body */
   }
-  
+
   .feynman-title {
     font-weight: 800;
     color: #007bff;
-    font-size: 1.5rem; /* Adjusted for chatbox size */
+    font-size: 1.5rem;
+    /* Adjusted for chatbox size */
   }
-  
+
   .feynman-icon {
-    font-size: 1.5rem; /* Adjusted for chatbox size */
+    font-size: 1.5rem;
+    /* Adjusted for chatbox size */
     color: #007bff;
     vertical-align: middle;
   }
-  
+
   .feynman-prompt {
     font-style: italic;
     color: #6c757d;
     font-size: 0.9rem;
   }
-  
+
   .submit-btn {
     font-weight: bold;
     letter-spacing: 1px;
-    padding: 0.5rem 1.5rem; /* Adjusted for chatbox size */
-    border-radius: 1.5rem; /* Adjusted for chatbox size */
+    padding: 0.5rem 1.5rem;
+    /* Adjusted for chatbox size */
+    border-radius: 1.5rem;
+    /* Adjusted for chatbox size */
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     transition: all 0.3s ease;
   }
-  
+
   .submit-btn:hover {
     box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
     transform: translateY(-1px);
@@ -158,13 +176,27 @@
       right: 5%;
       left: 5%;
     }
+
     #chatbox-toggle-button {
       right: 10px;
       bottom: 10px;
     }
+
     #chatbox-toggle-button.open {
-      transform: translateX(0); /* No horizontal movement on small screens */
+      transform: translateX(0);
+      /* No horizontal movement on small screens */
     }
+  }
+
+  #chatbox-toggle-button i {
+    transition: transform 0.3s ease;
+    display: inline-block;
+    /* Required for the transform to work properly */
+  }
+
+  #chatbox-toggle-button:hover i {
+    transform: rotate(-30deg) scale(1.1);
+    /* Rotate and slightly enlarge on hover */
   }
 </style>
 
@@ -224,31 +256,32 @@
   </div>
   <div class="chatbox-body">
     <!-- This div will be replaced by HTMX with the chat history partial  -->
-    <div id="chat-messages" hx-get="{% url 'learn:hx-get-chat-history-of-topic' topic.pk %}" hx-trigger="load" hx-swap="innerHTML">
-        <p class="text-muted text-center">Loading chat history...</p>
+    <div id="chat-messages" hx-get="{% url 'learn:hx-get-chat-history-of-topic' topic.pk %}" hx-trigger="load"
+      hx-swap="innerHTML">
+      <p class="text-muted text-center">Loading chat history...</p>
     </div>
-    </div>
+  </div>
 
   <div class="chatbox-footer">
-      <form id="chat-input-form" hx-post="{% url 'learn:hx-chat' topic.pk %}"
-            hx-target="#chat-messages"
-            hx-swap="beforeend"
-            hx-indicator="#chat-spinner">
-          {% csrf_token %}
-          <input type="hidden" name="chat_type" id="chat-type-input" value="general_chat">
-          <textarea id="chat-input" class="form-control mb-2" name="user_message" rows="1" placeholder="Ask your study buddy anything..."></textarea>
-          <button type="submit" class="btn btn-primary w-100" id="chat-send-button">
-              <i class="bi bi-send-fill me-2"></i> Send
-          </button>
-          <div id="chat-spinner" class="spinner-border text-primary htmx-indicator mt-1" role="status" style="display:none;">
-              <span class="visually-hidden">Loading...</span>
-          </div>
-      </form>
+    <form id="chat-input-form" hx-post="{% url 'learn:hx-chat' topic.pk %}" hx-target="#chat-messages"
+      hx-swap="beforeend" hx-indicator="#chat-spinner">
+      {% csrf_token %}
+      <input type="hidden" name="chat_type" id="chat-type-input" value="general_chat">
+      <textarea id="chat-input" class="form-control mb-2" name="user_message" rows="1"
+        placeholder="Ask your study buddy anything..."></textarea>
+      <button type="submit" class="btn btn-primary w-100" id="chat-send-button">
+        <i class="bi bi-send-fill me-2"></i> Send
+      </button>
+      <div id="chat-spinner" class="spinner-border text-primary htmx-indicator mt-1" role="status"
+        style="display:none;">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+    </form>
   </div>
 </div>
 
 <button id="chatbox-toggle-button">
-  (ツ)
+  <i class="bi bi-feather"></i>
 </button>
 
 <script>
@@ -288,26 +321,26 @@
       const total = checkboxes.length;
       const completed = Array.from(checkboxes).filter(cb => cb.checked).length;
       const percent = total > 0 ? Math.round((completed / total) * 100) : 0;
-      
+
       progressBar.style.width = percent + '%';
       progressBar.innerText = percent + '%';
-      
+
       // Dynamic show/hide of the Feynman explanation prompt
       if (percent === 100) {
         // Open chatbox automatically when 100% is reached
         if (!aiChatbox.classList.contains('open')) {
-            aiChatbox.classList.add('open');
-            chatboxToggleBtn.classList.add('open');
+          aiChatbox.classList.add('open');
+          chatboxToggleBtn.classList.add('open');
         }
-        
+
         // Check if the Feynman prompt message is already in chatMessagesDiv
         if (!document.getElementById('feynman-prompt-message-in-chat')) {
-            // Create a clone to append, give it a unique ID for tracking
-            const feynmanClone = feynmanPromptMessage.cloneNode(true);
-            feynmanClone.id = 'feynman-prompt-message-in-chat'; // Unique ID for the appended element
-            feynmanClone.style.display = 'block'; // Ensure it's visible
-            chatMessagesDiv.appendChild(feynmanClone);
-            chatMessagesDiv.scrollTop = chatMessagesDiv.scrollHeight; // Scroll to bottom
+          // Create a clone to append, give it a unique ID for tracking
+          const feynmanClone = feynmanPromptMessage.cloneNode(true);
+          feynmanClone.id = 'feynman-prompt-message-in-chat'; // Unique ID for the appended element
+          feynmanClone.style.display = 'block'; // Ensure it's visible
+          chatMessagesDiv.appendChild(feynmanClone);
+          chatMessagesDiv.scrollTop = chatMessagesDiv.scrollHeight; // Scroll to bottom
         }
 
         // --- New Logic: Use JS to update the hidden input and placeholder ---
@@ -317,7 +350,7 @@
         // If progress is not 100%, hide Feynman prompt if present
         const appendedFeynmanPrompt = document.getElementById('feynman-prompt-message-in-chat');
         if (appendedFeynmanPrompt) {
-            appendedFeynmanPrompt.remove(); // Remove the prompt message from chat
+          appendedFeynmanPrompt.remove(); // Remove the prompt message from chat
         }
 
         // --- New Logic: Use JS to update the hidden input and placeholder ---
@@ -327,7 +360,7 @@
     }
 
     checkboxes.forEach(cb => cb.addEventListener('change', updateProgress));
-    
+
     // Initial call to set the progress bar state
     updateProgress();
 
@@ -357,7 +390,7 @@
       aiChatbox.classList.toggle('open');
       chatboxToggleBtn.classList.toggle('open');
       if (aiChatbox.classList.contains('open')) {
-          chatMessagesDiv.scrollTop = chatMessagesDiv.scrollHeight; // Scroll to bottom when opening
+        chatMessagesDiv.scrollTop = chatMessagesDiv.scrollHeight; // Scroll to bottom when opening
       }
     });
 
@@ -367,19 +400,19 @@
     });
 
     // HTMX event listener for after explanation submission
-    document.body.addEventListener('htmx:afterRequest', function(event) {
-        // Check if the request was from our chat input form
-        if (event.detail.elt.id === 'chat-input-form') {
-            chatInput.value = ''; // Clear the textarea
-            // Hide the Feynman prompt message after submission
-            const appendedFeynmanPrompt = document.getElementById('feynman-prompt-message-in-chat');
-            if (appendedFeynmanPrompt) {
-                appendedFeynmanPrompt.remove(); 
-            }
-            chatTypeInput.value = 'general_chat'; // Reset chat type to general after explanation
-            chatInput.placeholder = "Ask your study buddy anything..."; // Reset placeholder
-            chatMessagesDiv.scrollTop = chatMessagesDiv.scrollHeight; // Scroll to bottom
+    document.body.addEventListener('htmx:afterRequest', function (event) {
+      // Check if the request was from our chat input form
+      if (event.detail.elt.id === 'chat-input-form') {
+        chatInput.value = ''; // Clear the textarea
+        // Hide the Feynman prompt message after submission
+        const appendedFeynmanPrompt = document.getElementById('feynman-prompt-message-in-chat');
+        if (appendedFeynmanPrompt) {
+          appendedFeynmanPrompt.remove();
         }
+        chatTypeInput.value = 'general_chat'; // Reset chat type to general after explanation
+        chatInput.placeholder = "Ask your study buddy anything..."; // Reset placeholder
+        chatMessagesDiv.scrollTop = chatMessagesDiv.scrollHeight; // Scroll to bottom
+      }
     });
 
   });
