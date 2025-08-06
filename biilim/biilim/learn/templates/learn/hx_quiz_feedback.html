@@ -1,0 +1,17 @@
+{% if score_percentage >= 70 %}
+    <div class="alert alert-success mt-3" role="alert">
+        <h4 class="alert-heading">Congratulations! 🎉</h4>
+        <p>You scored <strong>{{ score_percentage }}%</strong> ({{ correct_answers }} out of {{ total_questions }} correct).</p>
+        {% if is_graded %}
+            <hr>
+            <p class="mb-0">You have successfully passed the final graded quiz!</p>
+        {% endif %}
+    </div>
+{% else %}
+    <div class="alert alert-warning mt-3" role="alert">
+        <h4 class="alert-heading">No worries!</h4>
+        <p>You scored <strong>{{ score_percentage }}%</strong> ({{ correct_answers }} out of {{ total_questions }} correct).</p>
+        <hr>
+        <p class="mb-0">Review the material and try again to master this topic.</p>
+    </div>
+{% endif %}

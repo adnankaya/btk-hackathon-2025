@@ -7,7 +7,7 @@
     position: sticky;
     top: 0;
     z-index: 1030;
-    background-color: whitesmoke;
+    background-color: white;
     padding: 0.75rem 1rem;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
     border-radius: 0 0 1rem 1rem;
@@ -226,13 +226,13 @@
     </div>
 
     <div class="col-md-9">
-      <div class="mb-5">
+      <div class="card p-4 mb-2">
         <h2 class="h4">Description</h2>
         <p>{{ topic.description }}</p>
       </div>
 
       {% for section in topic.sections.all %}
-      <div id="section-{{ section.pk }}" class="mb-5 section-block rounded p-4">
+      <div id="section-{{ section.pk }}" class="mb-1 section-block rounded p-4">
         <h3 class="mb-3">{{ section.title }}</h3>
         <p class="flex-grow-1">{{ section.content }}</p>
         <div class="form-check mt-4">
@@ -242,13 +242,11 @@
           </label>
         </div>
       </div>
-
-      {# Quiz for this section #}
-      {% with section_quiz=section.quizzes.first %} {# Use the variable passed from the view #}
+      {% with section_quiz=section.quizzes.first %}
         {% if section_quiz %}
-          <div id="quiz-{{ section_quiz.pk }}" class="card mb-5 shadow-sm">
+          <div id="quiz-{{ section_quiz.pk }}" class="card mb-3 shadow-sm">
             <div class="card-header bg-light">
-              <h5 class="mb-0">Quiz for "{{ section.title }}"</h5>
+              <h5 class="mb-0">Non-graded Quiz for "{{ section.title }}"</h5>
             </div>
             <div class="card-body">
               <form hx-post="{% url 'learn:hx-submit-quiz' topic.pk %}"
@@ -270,8 +268,8 @@
                     {% endfor %}
                   </div>
                 {% endfor %}
-                <button type="submit" class="btn btn-sm btn-primary">
-                  Submit Quiz
+                <button type="submit" class="btn btn-primary">
+                  Submit
                   <span class="spinner-border spinner-border-sm htmx-indicator" style="display:none;"></span>
                 </button>
               </form>

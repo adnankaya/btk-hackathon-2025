@@ -8,6 +8,7 @@ from django.contrib import messages
 from biilim.core.views import HtmxHttpRequest
 from biilim.learn.models import Topic
 from biilim.learn.models import Section, Quiz, Question, Choice
+from biilim.learn.models import StudentAnswer
 from biilim.learn.models import ChatMessage
 from biilim.learn.schemas import TopicSchema
 from biilim.ai.api_client import gemini_generate_topic
@@ -191,7 +192,7 @@ def topic_search(request):
 
             return render(request, "learn/topic_search.html", ctx)
         
-    return render(request, "learn/topic_search.html", {"title": "Select a Topic"})
+    return render(request, "learn/topic_search.html", ctx)
 
 def hx_recommended_topics(request: HtmxHttpRequest):
     """
@@ -270,5 +271,70 @@ def get_chat_history_of_topic(request, pk):
     return render(request, "learn/hx_chat_messages_list.html", {"chat_history": chat_history})
 
 
+@login_required
 def hx_submit_quiz(request: HtmxHttpRequest, pk):
-    ...
+    """
+    Handles HTMX request to submit a quiz, saves student answers, and returns feedback.
+    This view handles both section quizzes and the main topic quiz.
+    
+    Args:
+        request: The HTMX HTTP request object.
+        pk: The primary key of the topic (used for context).
+    
+    Returns:
+        HttpResponse: Rendered HTMX partial with quiz feedback.
+    """
+    if request.method != "POST":
+        return HttpResponse(status=405) # Method Not Allowed
+
+    user = request.user
+    topic = get_object_or_404(Topic, pk=pk)
+
+    try:
+        quiz_id = request.POST.get("quiz_id")
+        quiz = get_object_or_404(Quiz, pk=quiz_id)
+
+        correct_answers_count = 0
+        total_questions_count = quiz.questions.count()
+        
+        # Use a transaction to ensure all answers are saved or none are
+        with transaction.atomic():
+            for question in quiz.questions.all():
+                # The name of the input is 'question-{{ question.pk }}'
+                student_answer_letter = request.POST.get(f"question-{question.pk}")
+                
+                if student_answer_letter:
+                    is_correct = (student_answer_letter == question.correct_answer_letter)
+                    
+                    if is_correct:
+                        correct_answers_count += 1
+                        
+                    # Save the student's answer to the database
+                    StudentAnswer.objects.create(
+                        user=user,
+                        question=question,
+                        selected_choice_letter=student_answer_letter,
+                        is_correct=is_correct
+                    )
+        
+        # Calculate the score
+        score_percentage = (correct_answers_count / total_questions_count) * 100 if total_questions_count > 0 else 0
+        
+        # Prepare context for the feedback partial
+        ctx = {
+            "is_graded": quiz.is_graded,
+            "score_percentage": int(score_percentage),
+            "correct_answers": correct_answers_count,
+            "total_questions": total_questions_count,
+            "quiz_id": quiz_id,
+        }
+        
+        # Return the rendered feedback partial
+        return render(request, "learn/hx_quiz_feedback.html", ctx)
+
+    except Exception as e:
+        # Log the error for debugging
+        # logger.error(f"Error submitting quiz for topic {pk}: {e}")
+        return HttpResponse(f"An error occurred: {str(e)}", status=500)
+
+
