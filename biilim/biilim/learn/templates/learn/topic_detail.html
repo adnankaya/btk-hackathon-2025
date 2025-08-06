@@ -221,7 +221,7 @@
           <a class="list-group-item list-group-item-action" href="#section-{{ section.pk }}">{{ section.title }}</a>
           {% endfor %}
         </div>
-        <a href="{% url 'learn:topics' %}" class="btn btn-outline-secondary mt-4 w-100">Back to Topics</a>
+        <a href="{% url 'learn:topics' %}" class="btn btn-secondary mt-4 w-100">Back to Topics</a>
       </div>
     </div>
 
@@ -242,9 +242,84 @@
           </label>
         </div>
       </div>
+
+      {# Quiz for this section #}
+      {% with section_quiz=section.quizzes.first %} {# Use the variable passed from the view #}
+        {% if section_quiz %}
+          <div id="quiz-{{ section_quiz.pk }}" class="card mb-5 shadow-sm">
+            <div class="card-header bg-light">
+              <h5 class="mb-0">Quiz for "{{ section.title }}"</h5>
+            </div>
+            <div class="card-body">
+              <form hx-post="{% url 'learn:hx-submit-quiz' topic.pk %}"
+                    hx-target="#quiz-feedback-{{ section_quiz.pk }}"
+                    hx-swap="innerHTML">
+                {% csrf_token %}
+                <input type="hidden" name="quiz_id" value="{{ section_quiz.pk }}">
+                {% for question in section_quiz.questions.all %}
+                  <div class="mb-4">
+                    <p><strong>Q{{ forloop.counter }}.</strong> {{ question.question_text }}</p>
+                    {% for choice in question.choices.all %}
+                      <div class="form-check">
+                        <input class="form-check-input" type="radio" name="question-{{ question.pk }}"
+                               id="choice-{{ choice.pk }}" value="{{ choice.letter }}" required>
+                        <label class="form-check-label" for="choice-{{ choice.pk }}">
+                          {{ choice.letter }}) {{ choice.text }}
+                        </label>
+                      </div>
+                    {% endfor %}
+                  </div>
+                {% endfor %}
+                <button type="submit" class="btn btn-sm btn-primary">
+                  Submit Quiz
+                  <span class="spinner-border spinner-border-sm htmx-indicator" style="display:none;"></span>
+                </button>
+              </form>
+              <div id="quiz-feedback-{{ section_quiz.pk }}" class="mt-3"></div>
+            </div>
+          </div>
+        {% endif %}
+      {% endwith %}
+
       {% empty %}
       <div class="alert alert-warning">No sections available for this topic.</div>
       {% endfor %}
+
+      {# Quiz for the entire topic #}
+      {% if main_topic_quiz %} {# Use the variable passed from the view #}
+        <div id="quiz-{{ main_topic_quiz.pk }}" class="card mb-5 shadow-lg">
+          <div class="card-header bg-primary text-white">
+            <h4 class="mb-0">Final Topic Quiz!</h4>
+          </div>
+          <div class="card-body">
+            <form hx-post="{% url 'learn:hx-submit-quiz' topic.pk %}"
+                  hx-target="#quiz-feedback-{{ main_topic_quiz.pk }}"
+                  hx-swap="innerHTML">
+              {% csrf_token %}
+              <input type="hidden" name="quiz_id" value="{{ main_topic_quiz.pk }}">
+              {% for question in main_topic_quiz.questions.all %}
+                <div class="mb-4">
+                  <p><strong>Q{{ forloop.counter }}.</strong> {{ question.question_text }}</p>
+                  {% for choice in question.choices.all %}
+                    <div class="form-check">
+                      <input class="form-check-input" type="radio" name="question-{{ question.pk }}"
+                             id="choice-{{ choice.pk }}" value="{{ choice.letter }}" required>
+                      <label class="form-check-label" for="choice-{{ choice.pk }}">
+                        {{ choice.letter }}) {{ choice.text }}
+                      </label>
+                    </div>
+                  {% endfor %}
+                </div>
+              {% endfor %}
+              <button type="submit" class="btn btn-lg btn-primary w-100">
+                Submit Final Quiz
+                <span class="spinner-border spinner-border-sm htmx-indicator" style="display:none;"></span>
+              </button>
+            </form>
+            <div id="quiz-feedback-{{ main_topic_quiz.pk }}" class="mt-3"></div>
+          </div>
+        </div>
+      {% endif %}
     </div>
   </div>
 </div>
@@ -264,10 +339,11 @@
 
   <div class="chatbox-footer">
     <form id="chat-input-form" hx-post="{% url 'learn:hx-chat' topic.pk %}" hx-target="#chat-messages"
-      hx-swap="beforeend" hx-indicator="#chat-spinner">
+      hx-swap="beforeend" hx-indicator="#chat-spinner"
+      _="on htmx:afterRequest scroll #chat-messages to bottom">
       {% csrf_token %}
       <input type="hidden" name="chat_type" id="chat-type-input" value="general_chat">
-      <textarea id="chat-input" class="form-control mb-2" name="user_message" rows="1"
+      <textarea id="chat-input" class="form-control mb-2" name="user_message" rows="2"
         placeholder="Ask your study buddy anything..."></textarea>
       <button type="submit" class="btn btn-primary w-100" id="chat-send-button">
         <i class="bi bi-send-fill me-2"></i> Send
@@ -286,7 +362,6 @@
 
 <script>
   document.addEventListener('DOMContentLoaded', function () {
-    // Progress Bar
     const checkboxes = document.querySelectorAll('.section-checkbox');
     const progressBar = document.getElementById('progress-bar');
     const chatboxToggleBtn = document.getElementById('chatbox-toggle-button');
@@ -297,13 +372,6 @@
     const chatSendButton = document.getElementById('chat-send-button');
     const chatTypeInput = document.getElementById('chat-type-input');
 
-    // Initial AI welcome message
-    const initialAiMessage = document.createElement('div');
-    initialAiMessage.classList.add('text-muted', 'text-center', 'mb-3');
-    initialAiMessage.innerHTML = `<p>Hello! I'm your AI Study Buddy. How can I help you today?</p>`;
-    chatMessagesDiv.appendChild(initialAiMessage);
-
-    // Feynman prompt message element (hidden by default, appended when needed)
     const feynmanPromptMessage = document.createElement('div');
     feynmanPromptMessage.id = 'feynman-prompt-message';
     feynmanPromptMessage.classList.add('feynman-section', 'text-center', 'mb-3');
@@ -315,7 +383,6 @@
             as if you were teaching it to a friend. The simpler you can explain it, the better you've understood it!
         </p>
     `;
-    // We append this later when needed, to ensure it appears at the correct time in the chat flow.
 
     function updateProgress() {
       const total = checkboxes.length;
@@ -325,35 +392,28 @@
       progressBar.style.width = percent + '%';
       progressBar.innerText = percent + '%';
 
-      // Dynamic show/hide of the Feynman explanation prompt
       if (percent === 100) {
-        // Open chatbox automatically when 100% is reached
         if (!aiChatbox.classList.contains('open')) {
           aiChatbox.classList.add('open');
           chatboxToggleBtn.classList.add('open');
         }
 
-        // Check if the Feynman prompt message is already in chatMessagesDiv
         if (!document.getElementById('feynman-prompt-message-in-chat')) {
-          // Create a clone to append, give it a unique ID for tracking
           const feynmanClone = feynmanPromptMessage.cloneNode(true);
-          feynmanClone.id = 'feynman-prompt-message-in-chat'; // Unique ID for the appended element
-          feynmanClone.style.display = 'block'; // Ensure it's visible
+          feynmanClone.id = 'feynman-prompt-message-in-chat';
+          feynmanClone.style.display = 'block';
           chatMessagesDiv.appendChild(feynmanClone);
-          chatMessagesDiv.scrollTop = chatMessagesDiv.scrollHeight; // Scroll to bottom
+          chatMessagesDiv.scrollTop = chatMessagesDiv.scrollHeight;
         }
 
-        // --- New Logic: Use JS to update the hidden input and placeholder ---
         chatTypeInput.value = 'explanation';
         chatInput.placeholder = "Write your explanation here...";
       } else {
-        // If progress is not 100%, hide Feynman prompt if present
         const appendedFeynmanPrompt = document.getElementById('feynman-prompt-message-in-chat');
         if (appendedFeynmanPrompt) {
-          appendedFeynmanPrompt.remove(); // Remove the prompt message from chat
+          appendedFeynmanPrompt.remove();
         }
 
-        // --- New Logic: Use JS to update the hidden input and placeholder ---
         chatTypeInput.value = 'general_chat';
         chatInput.placeholder = "Ask your study buddy anything...";
       }
@@ -361,10 +421,8 @@
 
     checkboxes.forEach(cb => cb.addEventListener('change', updateProgress));
 
-    // Initial call to set the progress bar state
     updateProgress();
 
-    // Timer
     const timerDisplay = document.getElementById('timer');
     const duration = 30;
     let totalSeconds = duration * 60;
@@ -385,12 +443,11 @@
 
     updateTimer();
 
-    // Chatbox Toggle Logic
     chatboxToggleBtn.addEventListener('click', () => {
       aiChatbox.classList.toggle('open');
       chatboxToggleBtn.classList.toggle('open');
       if (aiChatbox.classList.contains('open')) {
-        chatMessagesDiv.scrollTop = chatMessagesDiv.scrollHeight; // Scroll to bottom when opening
+        chatMessagesDiv.scrollTop = chatMessagesDiv.scrollHeight;
       }
     });
 
@@ -399,19 +456,16 @@
       chatboxToggleBtn.classList.remove('open');
     });
 
-    // HTMX event listener for after explanation submission
     document.body.addEventListener('htmx:afterRequest', function (event) {
-      // Check if the request was from our chat input form
       if (event.detail.elt.id === 'chat-input-form') {
-        chatInput.value = ''; // Clear the textarea
-        // Hide the Feynman prompt message after submission
+        chatInput.value = '';
         const appendedFeynmanPrompt = document.getElementById('feynman-prompt-message-in-chat');
         if (appendedFeynmanPrompt) {
           appendedFeynmanPrompt.remove();
         }
-        chatTypeInput.value = 'general_chat'; // Reset chat type to general after explanation
-        chatInput.placeholder = "Ask your study buddy anything..."; // Reset placeholder
-        chatMessagesDiv.scrollTop = chatMessagesDiv.scrollHeight; // Scroll to bottom
+        chatTypeInput.value = 'general_chat';
+        chatInput.placeholder = "Ask your study buddy anything...";
+        chatMessagesDiv.scrollTop = chatMessagesDiv.scrollHeight;
       }
     });
 

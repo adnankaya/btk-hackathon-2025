@@ -20,7 +20,7 @@ def get_topic_prompt(user_profile: Profile, topic_query: str) -> str:
     """
     Generate a highly structured prompt for the Gemini API to create a topic.
     
-    The prompt incorporates student profile data to personalize the learning path.
+    This version includes instructions for generating quizzes at the topic and section level.
     
     Args:
         user_profile (Profile): The student's profile data.
@@ -56,13 +56,19 @@ def get_topic_prompt(user_profile: Profile, topic_query: str) -> str:
         - If the style is **'real_world'**: Create a prompt that suggests a simple activity using everyday objects or observations from the real world.
         - If the style is **'simulation'**: Create a prompt that describes the core mechanics of a simple interactive simulation (e.g., a process with a draggable element, a step-by-step animation).
 
+    4.  **Quiz Generation:**
+        - **Section Quizzes:** For **EACH** section you generate, create a short, non-graded multiple-choice quiz with 1 to 3 questions that test the content of that specific section.
+        - **Topic Quiz:** In addition to the section quizzes, generate a single, comprehensive, graded multiple-choice quiz for the entire topic. This quiz should have 3 to 5 questions covering the main points of all sections.
+        - **Quiz Format:** Ensure each question has a `question_text`, four choices labeled "A", "B", "C", and "D", and a `correct_answer_letter` that is one of "A", "B", "C", or "D".
+
     ### Output Structure
     Provide the response as a single JSON object with the following fields:
     - `title`: The title of the topic.
     - `description`: A detailed overview of the topic.
     - `duration`: An estimated duration in minutes to complete the topic.
-    - `sections`: An array of objects, where each object has a `title` and `content` for a specific section.
+    - `sections`: An array of objects, where each object has a `title`, `content` for a specific section, and a `quiz` field containing a `QuizSchema` object for that section.
     - `supplementary_prompts`: An array of objects, where each object has a `style` and a `prompt` string for generating additional content. This array should only contain prompts for the styles listed in the student's profile.
+    - `quiz`: A `QuizSchema` object containing the questions for the entire topic.
     """
     
     return prompt

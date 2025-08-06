@@ -1,11 +1,12 @@
 import logging
-from django.shortcuts import render, redirect
+from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
 from django.contrib import messages
 
 from biilim.core.views import HtmxHttpRequest
 from biilim.learn.models import Topic
+from biilim.learn.models import Section, Quiz, Question, Choice
 from biilim.learn.models import ChatMessage
 from biilim.learn.schemas import TopicSchema
 from biilim.ai.api_client import gemini_generate_topic
@@ -32,21 +33,28 @@ def index(request):
 @login_required
 def topic_detail(request, pk):
     """
-    Render the detail page for a specific topic.
-    
-    Args:
-        request: The HTTP request object.
-        pk: The primary key of the topic to display.
-    
-    Returns:
-        HttpResponse: Rendered topic detail page.
+    Render the detail page for a specific topic, including all quiz data.
     """
-    topic = Topic.objects.get(pk=pk)
+    # Fetch topic and all related quiz data in a single, efficient query
+    topic = get_object_or_404(
+        Topic.objects.prefetch_related(
+            'sections__quizzes__questions__choices',  # Quizzes for each section
+            'quizzes__questions__choices'             # Quizzes for the entire topic
+        ), 
+        pk=pk
+    )
+    # Get the main topic quiz (where section is null and it's not graded)
+    # This assumes your main topic quiz is graded and not linked to a section
+    main_topic_quiz = topic.quizzes.filter(section__isnull=True, is_graded=True).first()
+
     ctx = {
         "title": topic.title,
         "topic": topic,
         "sections": topic.sections.all(),
+        "main_topic_quiz": main_topic_quiz,
+
     }
+    
     return render(request, "learn/topic_detail.html", ctx)
 
 def topics(request):
@@ -92,44 +100,94 @@ def topic_search(request):
             "query": query,
         }
         topics = Topic.objects.filter(title__icontains=query).order_by("-created_at") # NOTE we may increase search functionality later
-        if topics:
+        if topics.exists():
             ctx["topics"] = topics
         else:
-            # import ipdb; ipdb.set_trace()
-            json_data = gemini_generate_topic(
-                user_profile=user.profile,
-                prompt=query,
-                response_schema=TopicSchema,
-            )
             try:
+                # Call AI to generate topic
+                json_data = gemini_generate_topic(
+                    user_profile=user.profile,
+                    prompt=query,
+                    response_schema=TopicSchema,
+                )
+                
                 with transaction.atomic():
                     if isinstance(json_data, dict):
                         generated_topic = TopicSchema.model_validate(json_data)
                     else:
                         generated_topic = TopicSchema.model_validate_json(json_data)
-                    # Convert supplementary prompts to a format suitable for the database
+                    
+                    # 1. Convert supplementary prompts to a format suitable for the database
                     supplementary_prompts_for_db = [p.model_dump() for p in generated_topic.supplementary_prompts]
-                    # save the generated topic to the database
+                    
+                    # 2. Create the Topic object
                     new_topic = Topic.objects.create(
                         title=generated_topic.title,
                         description=generated_topic.description,
                         duration=generated_topic.duration,
                         is_recommended=generated_topic.is_recommended,
                         supplementary_prompts=supplementary_prompts_for_db,
+                        created_by=user,
                     )
-                    for section in generated_topic.sections:
-                        new_topic.sections.create(
-                            title=section.title,
-                            content=section.content,
-                            index=section.index,
+                    
+                    # 3. Create Quizzes for each section and the main topic
+                    
+                    # Create Quiz object for the main topic
+                    topic_quiz = Quiz.objects.create(
+                        topic=new_topic,
+                        is_graded=True,
+                    )
+                    # Create questions and choices for the main topic quiz
+                    for question_data in generated_topic.quiz.questions:
+                        new_question = Question.objects.create(
+                            quiz=topic_quiz,
+                            question_text=question_data.question_text,
+                            correct_answer_letter=question_data.correct_answer_letter,
                         )
-                    ctx["generated_topic"] = new_topic
+                        for choice_data in question_data.choices:
+                            Choice.objects.create(
+                                question=new_question,
+                                letter=choice_data.letter,
+                                text=choice_data.text,
+                            )
+                    
+                    # 4. Create Sections and their quizzes
+                    for section_data in generated_topic.sections:
+                        new_section = Section.objects.create(
+                            topic=new_topic,
+                            title=section_data.title,
+                            content=section_data.content,
+                            index=section_data.index,
+                        )
+                        
+                        # Create Quiz object for the current section
+                        section_quiz = Quiz.objects.create(
+                            section=new_section,
+                            is_graded=False,
+                        )
+                        # Create questions and choices for the section quiz
+                        for question_data in section_data.quiz.questions:
+                            new_question = Question.objects.create(
+                                quiz=section_quiz,
+                                question_text=question_data.question_text,
+                                correct_answer_letter=question_data.correct_answer_letter,
+                            )
+                            for choice_data in question_data.choices:
+                                Choice.objects.create(
+                                    question=new_question,
+                                    letter=choice_data.letter,
+                                    text=choice_data.text,
+                                )
+
+                    ctx["topic"] = new_topic
+                    messages.success(request, f"Topic '{new_topic.title}' and its quizzes were successfully generated!")
+            
             except Exception as e:
-                msg = f"Error saving generated topic: {str(e)}"
+                msg = f"Error saving generated topic and quizzes: {str(e)}"
                 logger.error(msg)
                 messages.error(request, msg)
 
-        return render(request, "learn/topic_search.html", ctx)
+            return render(request, "learn/topic_search.html", ctx)
         
     return render(request, "learn/topic_search.html", {"title": "Select a Topic"})
 
@@ -208,3 +266,7 @@ def get_chat_history_of_topic(request, pk):
     topic = Topic.objects.get(pk=pk)
     chat_history = ChatMessage.objects.filter(user=request.user, topic=topic).order_by('created_at')
     return render(request, "learn/hx_chat_messages_list.html", {"chat_history": chat_history})
+
+
+def hx_submit_quiz(request: HtmxHttpRequest, pk):
+    ...
