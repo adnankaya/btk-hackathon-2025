@@ -29,33 +29,6 @@
                     </div>
                 </div>
             </section>
-            <!-- Divider -->
-            <div class="my-4 text-center">
-                <span class="badge bg-secondary px-3 py-2" style="font-size:1rem;">{{ _("or") }}</span>
-            </div>
-
-            <!-- Upload Section -->
-            <section class="mb-4">
-                <div class="card shadow-sm border-0 bg-light">
-                    <div class="card-body p-4">
-                        <form method="post" action="{% url 'learn:upload' %}" enctype="multipart/form-data">
-                            {% csrf_token %}
-                            <label for="document" class="form-label fw-semibold">
-                                {{ _("Upload your own study material")}}
-                            </label>
-                            <div class="input-group">
-                                <input type="file" class="form-control" id="document" name="document" required>
-                                <button class="btn btn-outline-secondary" type="submit">
-                                    <i class="bi bi-upload"></i> {{ _("Upload") }}
-                                </button>
-                            </div>
-                            <div class="form-text text-muted mt-2">
-                                {{ _("Supported formats: PDF, DOCX, TXT") }}
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            </section>
 
             <!-- Divider -->
             <div class="my-4 text-center">

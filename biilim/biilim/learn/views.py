@@ -1,5 +1,6 @@
 import logging
 from django.shortcuts import render, get_object_or_404
+from django.shortcuts import redirect
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
 from django.contrib import messages
@@ -181,6 +182,7 @@ def topic_search(request):
 
                     ctx["topic"] = new_topic
                     messages.success(request, f"Topic '{new_topic.title}' and its quizzes were successfully generated!")
+                    return redirect("learn:topic_detail", pk=new_topic.pk)
             
             except Exception as e:
                 msg = f"Error saving generated topic and quizzes: {str(e)}"
