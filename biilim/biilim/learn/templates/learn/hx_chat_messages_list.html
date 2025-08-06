@@ -1,0 +1,17 @@
+{% for message in chat_history %}
+    {% if message.sender == "user" %}
+        <div class="d-flex justify-content-end mb-2">
+            <div class="p-3 bg-primary text-white rounded-start" style="max-width: 80%;">
+                {{ message.message_text }}
+            </div>
+        </div>
+    {% else %}
+        <div class="d-flex justify-content-start mb-2">
+            <div class="p-3 bg-light rounded-end" style="max-width: 80%;">
+                {{ message.message_text }}
+            </div>
+        </div>
+    {% endif %}
+{% empty %}
+    <p class="text-muted text-center">No chat history yet. Start typing!</p>
+{% endfor %}

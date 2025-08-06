@@ -223,10 +223,10 @@
     <button type="button" class="btn-close btn-close-white" aria-label="Close" id="chatbox-close-button"></button>
   </div>
   <div class="chatbox-body">
-    <div id="chat-messages" class="flex-grow-1 mb-3">
-      <p class="text-muted text-center">Start chatting with your smart Study Buddy Biilim AI!</p>
+    <!-- This div will be replaced by HTMX with the chat history partial  -->
+    <div id="chat-messages" hx-get="{% url 'learn:hx-get-chat-history-of-topic' topic.pk %}" hx-trigger="load" hx-swap="innerHTML">
+        <p class="text-muted text-center">Loading chat history...</p>
     </div>
-
     </div>
 
   <div class="chatbox-footer">

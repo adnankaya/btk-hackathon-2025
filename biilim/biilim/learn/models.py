@@ -38,3 +38,40 @@ class Section(models.Model):
 
     def __str__(self):
         return f"{self.topic.title} - {self.title}"
+
+
+
+class ChatMessage(BaseModel):
+    """
+    Model representing a single message in the chat history between a user and the AI.
+    """
+    SENDER_CHOICES = [
+        ("user", "User"),
+        ("ai", "AI"),
+    ]
+    CHAT_TYPE_CHOICES = [
+        ("general_chat", "General Chat"),
+        ("explanation_submission", "Explanation Submission"),
+        ("evaluation_feedback", "Evaluation Feedback"),
+        ("welcome_message", "Welcome Message"), # For initial AI messages
+    ]
+
+    user = models.ForeignKey("users.User", on_delete=models.CASCADE, related_name="chat_messages")
+    topic = models.ForeignKey("Topic", on_delete=models.CASCADE, related_name="chat_messages")
+    sender = models.CharField(max_length=10, choices=SENDER_CHOICES)
+    message_text = models.TextField()
+    chat_type = models.CharField(
+        max_length=50,
+        choices=CHAT_TYPE_CHOICES,
+        default="general_chat",
+        help_text="Type of chat message for context/logging"
+    )
+
+    class Meta:
+        ordering = ["created_at"]
+        verbose_name = "Chat Message"
+        verbose_name_plural = "Chat Messages"
+
+    def __str__(self) -> str:
+        return f"{self.sender.upper()} on {self.topic.title} at {self.created_at.strftime('%Y-%m-%d %H:%M')}"
+

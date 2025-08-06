@@ -6,6 +6,7 @@ import json
 from google import genai
 from biilim.users.models import Profile
 from biilim.learn.models import Topic
+from biilim.learn.models import ChatMessage
 
 logger = logging.getLogger(__name__)
 
@@ -200,9 +201,68 @@ def evaluate_student_explanation(user_message: str, topic: Topic, profile: Profi
         return "I'm sorry, I couldn't evaluate your explanation right now. Please try again later!"
 
 
+def get_chat_prompt(user_message: str, topic_data: dict, profile_data: dict, chat_history: list[dict]) -> str:
+    """
+    Generates a structured prompt for the Gemini API to handle general chat.
+    
+    This version includes chat history to maintain conversational context.
+    
+    Args:
+        user_message (str): The student's current message.
+        topic_data (dict): A dictionary containing the topic's title and description.
+        profile_data (dict): A dictionary containing the student's profile information.
+        chat_history (list[dict]): A list of past chat messages.
+        
+    Returns:
+        str: The formatted prompt for the Gemini API.
+    """
+    
+    history_str = ""
+    if chat_history:
+        history_str = "\n".join([f"{msg['sender'].capitalize()}: {msg['message_text']}" for msg in chat_history])
+    else:
+        history_str = "No prior chat history for this topic."
+
+    prompt = f"""
+    You are an expert AI study buddy. Your goal is to have a helpful, friendly, and contextual conversation with a student.
+
+    ### Student Profile
+    Use this information to tailor your response and make it more personalized.
+    - **Age:** {profile_data.get('age', 'N/A')}
+    - **City:** {profile_data.get('city', 'N/A')}
+    - **Country:** {profile_data.get('country', 'N/A')}
+    - **Cultural Background:** {profile_data.get('cultural_background', 'N/A')}
+    - **Hobbies:** {profile_data.get('hobbies', 'N/A')}
+    - **Preferred Learning Styles:** {profile_data.get('learning_styles', 'N/A')}
+
+    ### Current Topic Context
+    The current topic the student is studying is about **{topic_data.get('title', 'N/A')}**.
+    Here is a brief description to give you context: {topic_data.get('description', 'N/A')}
+
+    ### Chat History
+    This is a transcript of the conversation so far.
+    {history_str}
+
+    ### Student's Current Message
+    "{user_message}"
+
+    ### Conversational Instructions
+
+    1.  **Respond Directly:** Answer the student's message clearly and concisely.
+    2.  **Maintain Context:** Refer to the chat history and the current topic to ensure your response is relevant and avoids repeating information.
+    3.  **Provide Relatable Examples:** Use the student's profile data (hobbies, location, etc.) to offer personalized and easy-to-understand examples.
+    4.  **Tone:** Be friendly, supportive, and encouraging. Use a positive and conversational tone, like a helpful tutor.
+    5.  **Conciseness:** Keep your response brief, but informative. Avoid overly long paragraphs.
+
+    Your response should be the message you would say to the student directly, without any conversational filler or markdown formatting beyond what's necessary for readability.
+    """
+    return prompt
+
+
 def chat_with_student(user_message: str, topic: Topic, profile: Profile) -> str:
     """
-    Handles a chat interaction with a student about a specific topic.
+    Handles a chat interaction with a student about a specific topic,
+    including the conversation history for context.
     
     Args:
         user_message (str): The student's message.
@@ -212,6 +272,49 @@ def chat_with_student(user_message: str, topic: Topic, profile: Profile) -> str:
     Returns:
         str: The AI's response to the student's message.
     """
-    # Placeholder for actual chat logic
-    # This should call the Gemini API or any other service to generate a response
-    return f"AI response to your message about {topic.title}: {user_message}"
+    # Prepare topic data for the prompt
+    topic_data = {
+        "title": topic.title,
+        "description": topic.description,
+    }
+
+    # Prepare profile data for the prompt
+    profile_data = {
+        "age": profile.age,
+        "city": profile.city,
+        "country": profile.country,
+        "cultural_background": profile.cultural_background,
+        "hobbies": profile.hobbies,
+        "learning_styles": profile.learning_styles,
+    }
+
+    # Fetch chat history from the database
+    # IMPORTANT FIX: Convert the QuerySet to a list before slicing
+    chat_history_queryset = ChatMessage.objects.filter(
+        user=profile.user,
+        topic=topic,
+    ).exclude(
+        chat_type__in=["explanation_submission", "evaluation_feedback"]
+    ).order_by('created_at').values('sender', 'message_text')
+    
+    # Convert to a list to allow standard Python slicing with negative indices
+    chat_history_list = list(chat_history_queryset)
+    
+    # Exclude the most recent message (which is the user's current message)
+    formatted_history = chat_history_list[:-1] 
+
+    # Construct the structured prompt
+    structured_prompt = get_chat_prompt(user_message, topic_data, profile_data, formatted_history)
+
+    client = genai.Client(api_key=settings.GEMINI_API_KEY)
+
+    try:
+        response = client.models.generate_content(
+            model="gemini-2.0-flash", 
+            contents=structured_prompt,
+        )
+        return response.text
+    except Exception as e:
+        logger.error(f"Error calling Gemini API for general chat with history: {e}")
+        return "I'm sorry, I couldn't respond to that right now. Please try again later!"
+

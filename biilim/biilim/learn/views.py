@@ -6,6 +6,7 @@ from django.contrib import messages
 
 from biilim.core.views import HtmxHttpRequest
 from biilim.learn.models import Topic
+from biilim.learn.models import ChatMessage
 from biilim.learn.schemas import TopicSchema
 from biilim.ai.api_client import gemini_generate_topic
 from biilim.ai.api_client import evaluate_student_explanation, chat_with_student
@@ -145,6 +146,7 @@ def hx_recommended_topics(request: HtmxHttpRequest):
     recommended_topics = Topic.objects.filter(is_recommended=True).order_by("-created_at")[:6]
     return render(request, "learn/hx_recommended_topics.html", {"recommended_topics": recommended_topics})
 
+from django.http import HttpResponse
 
 @login_required
 def hx_chat_about_topic(request:HtmxHttpRequest, pk):
@@ -159,8 +161,20 @@ def hx_chat_about_topic(request:HtmxHttpRequest, pk):
     """
     chat_type = request.POST.get("chat_type")
     user_message = request.POST.get("user_message")
-    profile = request.user.profile
+    user = request.user
+    profile = user.profile
     topic = Topic.objects.get(pk=pk)
+    if not user_message:
+        # If user sends an empty message, return an empty response (HTMX will do nothing)
+        return HttpResponse("") 
+    # 1. Save User's Message to the database
+    ChatMessage.objects.create(
+        user=user,
+        topic=topic,
+        sender="user",
+        message_text=user_message,
+        chat_type=chat_type
+    )
     ai_response = ""
     if chat_type == "explanation":
         # Assumed this function returns a string with the AI's feedback
@@ -169,11 +183,28 @@ def hx_chat_about_topic(request:HtmxHttpRequest, pk):
         # Assumed this function returns a string with the AI's chat response
         ai_response = chat_with_student(user_message, topic=topic, profile=profile)
 
+    # 2. Save the AI's Response to the database
+    ChatMessage.objects.create(
+        user=user,
+        topic=topic,
+        sender="ai",
+        message_text=ai_response,
+        chat_type="evaluation_feedback" if chat_type == "explanation" else "general_chat"
+    )
+
+    # 3. Render ONLY the new user message and AI response using your partial
     ctx = {
-        "user_message": user_message,
+        "user_message": user_message, # Pass the actual message text
         "ai_response": ai_response,
-        "chat_type": chat_type,
+        "chat_type": chat_type, # This might be useful for conditional styling in the partial
     }
     
     # Render the partial template with the chat messages
     return render(request, "learn/hx_chat_message.html", ctx)
+
+
+@login_required
+def get_chat_history_of_topic(request, pk):
+    topic = Topic.objects.get(pk=pk)
+    chat_history = ChatMessage.objects.filter(user=request.user, topic=topic).order_by('created_at')
+    return render(request, "learn/hx_chat_messages_list.html", {"chat_history": chat_history})
