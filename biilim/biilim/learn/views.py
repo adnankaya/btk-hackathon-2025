@@ -13,6 +13,9 @@ from biilim.learn.models import ChatMessage
 from biilim.learn.schemas import TopicSchema
 from biilim.ai.api_client import gemini_generate_topic
 from biilim.ai.api_client import evaluate_student_explanation, chat_with_student
+from biilim.ai.agents import get_html_animation_for_topic
+
+
 
 logger = logging.getLogger(__name__)
 
@@ -338,3 +341,57 @@ def hx_submit_quiz(request: HtmxHttpRequest, pk):
         return HttpResponse(f"An error occurred: {str(e)}", status=500)
 
 
+
+
+@login_required
+def hx_get_visual_helpers(request: HtmxHttpRequest, topic_pk, section_pk=None):
+    """
+    Handles HTMX request to get visual helpers (HTML animations) from the AI agent.
+    
+    Args:
+        request: The HTTP request.
+        pk: The PK of the topic.
+        section_pk: Optional PK of the section.
+        
+    Returns:
+        HttpResponse: A rendered HTML partial with the generated animation code.
+    """
+    user_profile = request.user.profile
+    preferred_styles = [s.strip() for s in user_profile.learning_styles.split(',')]
+    
+    # Ensure 'simulation' or 'visual' is in preferred styles for this feature
+    if 'simulation' not in preferred_styles and 'visual' not in preferred_styles:
+        return HttpResponse('<div class="alert alert-warning">Interactive visualizations are not enabled for your learning style.</div>')
+    
+    topic = get_object_or_404(Topic, pk=topic_pk)
+    section_title = None
+    
+    if section_pk:
+        section = get_object_or_404(Section, pk=section_pk, topic=topic)
+        section_title = section.title
+
+    # Prepare user profile data for the agent
+    user_profile_data = {
+        "age": user_profile.age,
+        "city": user_profile.city,
+        "country": user_profile.country,
+        "hobbies": user_profile.hobbies,
+        "learning_styles": user_profile.learning_styles,
+    }
+    
+    # Call the AI agent to get the HTML animation
+    animation_data = get_html_animation_for_topic(
+        topic_title=topic.title,
+        topic_description=topic.description,
+        user_profile=user_profile_data,
+        section_title=section_title
+    )
+    
+    ctx = {
+        "animation_code": animation_data.full_html_code,
+        "animation_description": animation_data.description,
+        "source_type": "section" if section_pk else "topic",
+        "source_title": section_title if section_pk else topic.title
+    }
+    
+    return render(request, 'learn/hx_visual_helpers.html', ctx)

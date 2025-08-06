@@ -9,6 +9,9 @@ django-celery-beat==2.8.1  # https://github.com/celery/django-celery-beat
 flower==2.0.1  # https://github.com/mher/flower
 google-genai==1.2.0
 pydantic==2.10.4
+smolagents==1.20.0
+litellm==1.75.0
+
 
 # Django
 # ------------------------------------------------------------------------------

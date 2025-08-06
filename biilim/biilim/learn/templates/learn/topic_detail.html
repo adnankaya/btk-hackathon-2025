@@ -229,6 +229,21 @@
       <div class="card p-4 mb-2">
         <h2 class="h4">Description</h2>
         <p>{{ topic.description }}</p>
+          <div class="row">
+          <div class="col lg-6 mx-auto">
+          <button class="btn btn-warning visual-helpers-btn"
+                    hx-get="{% url 'learn:hx-get-visual-helpers-topic' topic_pk=topic.pk %}"
+                    hx-target="#topic-visual-helpers"
+                    hx-swap="innerHTML"
+                    hx-indicator="#topic-visual-helpers-spinner">
+                <i class="bi bi-images me-2"></i>Visualize this Topic
+            </button>
+            <span id="topic-visual-helpers-spinner" class="spinner-border spinner-border-sm text-info htmx-indicator ml-2" style="display:none;"></span>
+          </div>
+        </div>
+        <div class="container">
+          <div id="topic-visual-helpers" class="mb-5"></div>
+        </div>
       </div>
 
       {% for section in topic.sections.all %}
@@ -241,6 +256,21 @@
             Mark as completed
           </label>
         </div>
+        <div class="row">
+          <div class="col lg-6 mx-auto">
+            <button class="btn btn-sm btn-warning visual-helpers-btn"
+                  hx-get="{% url 'learn:hx-get-visual-helpers-section' topic_pk=topic.pk section_pk=section.pk %}"
+                  hx-target="#section-visual-helpers-{{ section.pk }}"
+                  hx-swap="innerHTML"
+                  hx-indicator="#section-visual-helpers-spinner-{{ section.pk }}">
+              <i class="bi bi-images me-2"></i> Visualize this Section
+          </button>
+          <span id="section-visual-helpers-spinner-{{ section.pk }}" class="spinner-border spinner-border-sm text-info htmx-indicator ml-2" style="display:none;"></span>
+        </div>
+      </div>
+      <div class="container">
+        <div id="section-visual-helpers-{{ section.pk }}" class="mb-5"></div>
+      </div>
       </div>
       {% with section_quiz=section.quizzes.first %}
         {% if section_quiz %}

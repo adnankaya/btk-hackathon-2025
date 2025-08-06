@@ -41,15 +41,15 @@ services:
     volumes:
       - biilim_local_redis_data:/data
 
-  celeryworker:
-    <<: *django
-    image: biilim_local_celeryworker
-    container_name: biilim_local_celeryworker
-    depends_on:
-      - redis
-      - postgres
-    ports: []
-    command: /start-celeryworker
+  # celeryworker:
+  #   <<: *django
+  #   image: biilim_local_celeryworker
+  #   container_name: biilim_local_celeryworker
+  #   depends_on:
+  #     - redis
+  #     - postgres
+  #   ports: []
+  #   command: /start-celeryworker
 
   # celerybeat:
   #   <<: *django
