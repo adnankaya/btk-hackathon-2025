@@ -89,6 +89,65 @@ def gemini_generate_topic(user_profile: Profile, prompt: str, response_schema: P
     return response.text
 
 
+def get_explanation_evaluation_prompt(user_explanation: str, topic_data: dict, profile_data: dict) -> str:
+    """
+    Generates a structured prompt for the Gemini API to evaluate a student's explanation.
+    
+    Args:
+        user_explanation (str): The student's explanation.
+        topic_data (dict): A dictionary containing the topic's title, description, and sections.
+        profile_data (dict): A dictionary containing the student's profile information.
+        
+    Returns:
+        str: The formatted prompt for the Gemini API.
+    """
+    
+    topic_sections_content = "\n".join([
+        f"Section: {s['title']}\nContent: {s['content']}" 
+        for s in topic_data.get('sections', [])
+    ])
+
+    prompt = f"""
+    You are an expert AI tutor specializing in evaluating student understanding. Your goal is to provide constructive, personalized feedback on a student's explanation of a topic.
+
+    ### Student Profile
+    Use this information to tailor your feedback, examples, and suggestions for remediation.
+    - **Age:** {profile_data.get('age', 'N/A')}
+    - **City:** {profile_data.get('city', 'N/A')}
+    - **Country:** {profile_data.get('country', 'N/A')}
+    - **Cultural Background:** {profile_data.get('cultural_background', 'N/A')}
+    - **Hobbies:** {profile_data.get('hobbies', 'N/A')}
+    - **Preferred Learning Styles:** {profile_data.get('learning_styles', 'N/A')}
+
+    ### Original Topic Content
+    This is the content the student was expected to learn. Refer to this for accuracy and completeness.
+    - **Topic Title:** {topic_data.get('title', 'N/A')}
+    - **Topic Description:** {topic_data.get('description', 'N/A')}
+    - **Topic Sections:**
+    {topic_sections_content}
+
+    ### Student's Explanation
+    This is the explanation provided by the student that you need to evaluate.
+    "{user_explanation}"
+
+    ### Evaluation Instructions
+
+    1.  **Acknowledge and Motivate:** Start with positive reinforcement, acknowledging their effort.
+    2.  **Identify Strengths:** Clearly state what the student explained well or understood correctly. Be specific.
+    3.  **Identify Gaps/Misconceptions:** Point out areas where their understanding is incomplete, inaccurate, or missing key details. Frame this constructively.
+    4.  **Suggest Next Steps:** Provide actionable advice for improvement. This could include:
+        * Revisiting a specific section of the topic.
+        * Suggesting a different learning style for a particular concept (e.g., "Perhaps a visual diagram would help with X?").
+        * Proposing a real-world example or a simple practice exercise.
+        * Asking a clarifying question to prompt deeper thought.
+    5.  **Tone:** Maintain a supportive, encouraging, and clear tone.
+    6.  **Conciseness:** Keep the feedback concise but comprehensive. Aim for a paragraph or two.
+
+    Your response should be the feedback directly, without any conversational filler or markdown formatting beyond what's necessary for readability (e.g., bolding key terms).
+    """
+    return prompt
+
+
 def evaluate_student_explanation(user_message: str, topic: Topic, profile: Profile) -> str:
     """
     Evaluates a student's explanation of a topic and provides feedback.
@@ -101,9 +160,45 @@ def evaluate_student_explanation(user_message: str, topic: Topic, profile: Profi
     Returns:
         str: The AI's feedback on the student's explanation.
     """
-    # Placeholder for actual evaluation logic
-    # This should call the Gemini API or any other service to evaluate the explanation
-    return f"Feedback on your explanation about {topic.title}: {user_message}"
+    # Prepare topic data for the prompt
+    topic_sections_list = [
+        {"title": section.title, "content": section.content}
+        for section in topic.sections.all()
+    ]
+    topic_data = {
+        "title": topic.title,
+        "description": topic.description,
+        "sections": topic_sections_list,
+    }
+
+    # Prepare profile data for the prompt
+    profile_data = {
+        "age": profile.age,
+        "city": profile.city,
+        "country": profile.country,
+        "cultural_background": profile.cultural_background,
+        "hobbies": profile.hobbies,
+        "learning_styles": profile.learning_styles,
+    }
+
+    # Construct the structured prompt
+    structured_prompt = get_explanation_evaluation_prompt(user_message, topic_data, profile_data)
+
+    # Initialize Gemini client (ensure settings.GEMINI_API_KEY is configured)
+    client = genai.Client(api_key=settings.GEMINI_API_KEY)
+
+    try:
+        # Call Gemini API
+        response = client.models.generate_content(
+            model="gemini-2.0-flash", # Or gemini-1.5-pro for more complex reasoning
+            contents=structured_prompt,
+            # No response_schema here as we want a plain string feedback
+        )
+        return response.text
+    except Exception as e:
+        logger.error(f"Error calling Gemini API for explanation evaluation: {e}")
+        return "I'm sorry, I couldn't evaluate your explanation right now. Please try again later!"
+
 
 def chat_with_student(user_message: str, topic: Topic, profile: Profile) -> str:
     """
