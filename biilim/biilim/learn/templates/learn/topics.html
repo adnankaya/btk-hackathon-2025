@@ -25,6 +25,12 @@
                             <div class="card-body d-flex flex-column">
                                 <h5 class="card-title fw-semibold mb-2">{{ topic.title }}</h5>
                                 <p class="card-text text-muted small flex-grow-1">{{ topic.description }}</p>
+                                <div>
+                                    <!-- <span class="badge bg-secondary">{{ topic.duration }} min</span> -->
+                                    {% if topic.is_recommended %}
+                                    <span class="badge bg-warning-subtle text-dark ms-2">{{ _("Recommended") }}</span>
+                                    {% endif %}
+                                </div>
                                 <a href="{% url 'learn:topic_detail' topic.id %}"
                                     class="btn btn-outline-dark btn-sm mt-2 w-100">
                                     ⚡️ {{ _("Start Learning") }}

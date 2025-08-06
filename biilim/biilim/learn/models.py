@@ -20,6 +20,7 @@ class Topic(BaseModel):
         blank=True,
     )
     is_recommended = models.BooleanField(default=False, help_text="Whether this topic is recommended for users")
+    supplementary_prompts = models.JSONField(default=list, blank=True, null=True)
     
 
     def __str__(self) -> str:

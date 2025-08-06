@@ -1,0 +1,16 @@
+{% comment %} 
+This partial is rendered and appended to the chat window by HTMX.
+It displays a single user message and the corresponding AI response.
+{% endcomment %}
+
+<div class="d-flex justify-content-end mb-3">
+    <div class="p-3 bg-primary text-white rounded-start" style="max-width: 80%;">
+        {{ user_message }}
+    </div>
+</div>
+
+<div class="d-flex justify-content-start mb-3">
+    <div class="p-3 bg-light rounded-end" style="max-width: 80%;">
+        {{ ai_response }}
+    </div>
+</div>

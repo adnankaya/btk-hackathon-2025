@@ -148,7 +148,7 @@ Adapts Communication Style (tone, humor) based on user interaction.
 Celebrates Milestones with personalized congratulations.
 
 # Features
-AI Study Buddy Application Features
+Biilim AI Study Buddy Application Features
 I. Core Study & Productivity Tools
 User Registration & Profile: Secure account creation and management.
 

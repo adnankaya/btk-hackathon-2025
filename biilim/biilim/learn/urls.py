@@ -8,6 +8,7 @@ app_name = "learn"
 urlpatterns = [
     # htmx paths
     path("hx/recommended-topics/", view=views.hx_recommended_topics, name="hx-recommended-topics"),
+    path("hx/<int:pk>/chat", view=views.hx_chat_about_topic, name="hx-chat"),
 
 
     # paths
