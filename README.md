@@ -4,6 +4,7 @@ Yapay zeka tabanlı öğrenme platformu
 
 # Run with docker
 ```bash
+cd biilim
 docker compose -f docker-compose.local.yml up -d --build
 ```
 
